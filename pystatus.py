@@ -8,6 +8,7 @@ import os
 
 dir_path=os.path.dirname(os.path.realpath(__file__))
 
+spotify_color = '#9ec600'
 
 def get_status():
     spotify_read = subprocess.check_output("%s/getInfo.sh status" % dir_path, shell=True)
@@ -50,6 +51,10 @@ def get_governor():
     with open('/sys/devices/platform/i5k_amb.0/temp4_input') as fp:
         return fp.readlines()[0].strip()
 
+def get_json(line):
+    j = json.loads(line)
+    j.insert(0, {'color' : spotify_color, 'full_text' : ' %s - %s' % (get_artist(), get_song()) , 'name' : 'spotify'})
+    return j
 
 
 if __name__ == '__main__':
@@ -59,20 +64,15 @@ if __name__ == '__main__':
     # The second line contains the start of the infinite array.
     print_line(read_line())
 
+    if len(sys.argv) > 1:
+        spotify_color = sys.argv[1]
     while True:
-
         line, prefix = read_line(), ''
         # ignore comma at start of lines
         if line.startswith(','):
             line, prefix = line[1:], ','
         if get_status() in ['Playing\n']:
-            j = json.loads(line)
-            # insert information into the start of the json, but could be anywhere
-            # CHANGE THIS LINE TO INSERT SOMETHING ELSE
-            j.insert(0, {'color' : '#9ec600', 'full_text' : ' %s - %s' % (get_artist(), get_song()) , 'name' : 'spotify'})
-            # and echo back new encoded json
-            print_line(prefix+json.dumps(j))
+            print_line(prefix+json.dumps(get_json(line)))
         else:
             j = json.loads(line)
             print_line(prefix+json.dumps(j))
-            #print_line(json.dumps(j))
